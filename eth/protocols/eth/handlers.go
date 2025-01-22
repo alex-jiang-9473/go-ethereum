@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
@@ -370,6 +371,14 @@ func handleNewPooledTransactionHashes(backend Backend, msg Decoder, peer *Peer) 
 	}
 	// Schedule all the unknown hashes for retrieval
 	for _, hash := range ann.Hashes {
+		// [yahui.jiang] log tx msg received anno
+		log.Error("TxMsg",
+			"Time", time.Now().UnixNano(),
+			"peerID", peer.Node().ID(),
+			"peerAddress", peer.Node().IP(),
+			"txType", "anno",
+			"txSize", len(hash.Bytes()),
+			"txHash", hash.String())
 		peer.markTransaction(hash)
 	}
 	return backend.Handle(peer, ann)
@@ -381,11 +390,11 @@ func handleGetPooledTransactions(backend Backend, msg Decoder, peer *Peer) error
 	if err := msg.Decode(&query); err != nil {
 		return fmt.Errorf("%w: message %v: %v", errDecode, msg, err)
 	}
-	hashes, txs := answerGetPooledTransactions(backend, query.GetPooledTransactionsRequest)
+	hashes, txs := answerGetPooledTransactions(backend, query.GetPooledTransactionsRequest, peer)
 	return peer.ReplyPooledTransactionsRLP(query.RequestId, hashes, txs)
 }
 
-func answerGetPooledTransactions(backend Backend, query GetPooledTransactionsRequest) ([]common.Hash, []rlp.RawValue) {
+func answerGetPooledTransactions(backend Backend, query GetPooledTransactionsRequest, peer *Peer) ([]common.Hash, []rlp.RawValue) {
 	// Gather transactions until the fetch or network limits is reached
 	var (
 		bytes  int
@@ -409,6 +418,14 @@ func answerGetPooledTransactions(backend Backend, query GetPooledTransactionsReq
 			txs = append(txs, encoded)
 			bytes += len(encoded)
 		}
+		// [yahui.jiang] log tx msg received get
+		log.Error("TxMsg",
+			"Time", time.Now().UnixNano(),
+			"peerID", peer.Node().ID(),
+			"peerAddress", peer.Node().IP(),
+			"txType", "get",
+			"txSize", len(hash.Bytes()),
+			"txHash", hash.String())
 	}
 	return hashes, txs
 }
@@ -428,6 +445,15 @@ func handleTransactions(backend Backend, msg Decoder, peer *Peer) error {
 		if tx == nil {
 			return fmt.Errorf("%w: transaction %d is nil", errDecode, i)
 		}
+		// [yahui.jiang] log tx msg received push
+		log.Error("TxMsg",
+			"Time", time.Now().UnixNano(),
+			"peerID", peer.Node().ID(),
+			"peerAddress", peer.Node().IP(),
+			"txType", "push",
+			"txSize", tx.Size(),
+			"txHash", tx.Hash().String())
+
 		peer.markTransaction(tx.Hash())
 	}
 	return backend.Handle(peer, &txs)
@@ -448,6 +474,15 @@ func handlePooledTransactions(backend Backend, msg Decoder, peer *Peer) error {
 		if tx == nil {
 			return fmt.Errorf("%w: transaction %d is nil", errDecode, i)
 		}
+		// [yahui.jiang] log tx msg received pool
+		log.Error("TxMsg",
+			"Time", time.Now().UnixNano(),
+			"peerID", peer.Node().ID(),
+			"peerAddress", peer.Node().IP(),
+			"txType", "pool",
+			"txSize", tx.Size(),
+			"txHash", tx.Hash().String())
+
 		peer.markTransaction(tx.Hash())
 	}
 	requestTracker.Fulfil(peer.id, peer.version, PooledTransactionsMsg, txs.RequestId)

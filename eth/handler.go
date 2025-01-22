@@ -425,7 +425,8 @@ func (h *handler) Start(maxPeers int) {
 	h.wg.Add(1)
 	h.txsCh = make(chan core.NewTxsEvent, txChanSize)
 	h.txsSub = h.txpool.SubscribeTransactions(h.txsCh, false)
-	go h.txBroadcastLoop()
+	// [yahui.jiang] comment out the send tx function
+	// go h.txBroadcastLoop()
 
 	// start sync handlers
 	h.txFetcher.Start()
@@ -515,8 +516,24 @@ func (h *handler) BroadcastTransactions(txs types.Transactions) {
 			}
 			if broadcast {
 				txset[peer] = append(txset[peer], tx.Hash())
+				// [yahui.jiang] log the tx hash send push to peer
+				log.Error("TxMsg",
+					"Time", time.Now().UnixNano(),
+					"peerID", peer.Node().ID(),
+					"peerAddress", peer.Node().IP(),
+					"txType", "spush",
+					"txSize", tx.Size(),
+					"txHash", tx.Hash().String())
 			} else {
 				annos[peer] = append(annos[peer], tx.Hash())
+				// [yahui.jiang] log the tx hash send anno to peer
+				log.Error("TxMsg",
+					"Time", time.Now().UnixNano(),
+					"peerID", peer.Node().ID(),
+					"peerAddress", peer.Node().IP(),
+					"txType", "sanno",
+					"txSize", len(tx.Hash().Bytes()),
+					"txHash", tx.Hash().String())
 			}
 		}
 	}
