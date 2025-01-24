@@ -454,6 +454,17 @@ func handleTransactions(backend Backend, msg Decoder, peer *Peer) error {
 			"txSize", tx.Size(),
 			"txHash", tx.Hash().String())
 
+		// [yahui.jiang] log tx msg for pushes that the tx already exists
+		if backend.TxPool().Get(tx.Hash()) != nil {
+			log.Error("TxMsg - Bad Decision",
+				"Time", time.Now().UnixNano(),
+				"peerID", peer.Node().ID(),
+				"peerAddress", peer.Node().IP(),
+				"txType", "push",
+				"txSize", tx.Size(),
+				"txHash", tx.Hash().String())
+		}
+
 		peer.markTransaction(tx.Hash())
 	}
 	return backend.Handle(peer, &txs)
@@ -482,6 +493,17 @@ func handlePooledTransactions(backend Backend, msg Decoder, peer *Peer) error {
 			"txType", "pool",
 			"txSize", tx.Size(),
 			"txHash", tx.Hash().String())
+
+		// [yahui.jiang] log tx msg for pools that the tx already exists
+		if backend.TxPool().Get(tx.Hash()) != nil {
+			log.Error("TxMsg - Bad Decision",
+				"Time", time.Now().UnixNano(),
+				"peerID", peer.Node().ID(),
+				"peerAddress", peer.Node().IP(),
+				"txType", "pool",
+				"txSize", tx.Size(),
+				"txHash", tx.Hash().String())
+		}
 
 		peer.markTransaction(tx.Hash())
 	}
