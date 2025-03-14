@@ -259,6 +259,7 @@ func (f *TxFetcher) Notify(peer string, types []byte, sizes []uint32, hashes []c
 		duplicate   int64
 		underpriced int64
 	)
+	// [yahui.jiang], todo, add logs to see if we are going to retrive the tx
 	for i, hash := range hashes {
 		switch {
 		case f.hasTx(hash):
@@ -346,6 +347,21 @@ func (f *TxFetcher) Enqueue(peer string, txs []*types.Transaction, direct bool) 
 			if errors.Is(err, txpool.ErrUnderpriced) || errors.Is(err, txpool.ErrReplaceUnderpriced) {
 				f.underpriced.Add(batch[j].Hash(), batch[j].Time())
 			}
+
+			// [yahui.jiang] log the transaction accepted or rejected
+			if err == nil {
+				log.Error("TxMsg - Accepted",
+					"Time", time.Now().UnixNano(),
+					"peerID", peer,
+					"txHash", batch[j].Hash().String())
+			} else {
+				log.Error("TxMsg - Rejected",
+					"Time", time.Now().UnixNano(),
+					"peerID", peer,
+					"txHash", batch[j].Hash().String(),
+					"err", err.Error())
+			}
+
 			// Track a few interesting failure types
 			switch {
 			case err == nil: // Noop, but need to handle to not count these

@@ -445,24 +445,31 @@ func handleTransactions(backend Backend, msg Decoder, peer *Peer) error {
 		if tx == nil {
 			return fmt.Errorf("%w: transaction %d is nil", errDecode, i)
 		}
-		// [yahui.jiang] log tx msg received push
-		log.Error("TxMsg",
-			"Time", time.Now().UnixNano(),
-			"peerID", peer.Node().ID(),
-			"peerAddress", peer.Node().IP(),
-			"txType", "push",
-			"txSize", tx.Size(),
-			"txHash", tx.Hash().String())
 
 		// [yahui.jiang] log tx msg for pushes that the tx already exists
 		if backend.TxPool().Get(tx.Hash()) != nil {
-			log.Error("TxMsg - Bad Decision",
+			log.Error("TxMsg - Exist",
 				"Time", time.Now().UnixNano(),
 				"peerID", peer.Node().ID(),
 				"peerAddress", peer.Node().IP(),
 				"txType", "push",
 				"txSize", tx.Size(),
-				"txHash", tx.Hash().String())
+				"txHash", tx.Hash().String(),
+				"txGasPrice", tx.GasPrice().String(),
+				"txGasFeeCap", tx.GasFeeCap().String(),
+				"txGasTipCap", tx.GasTipCap().String())
+		} else {
+			// [yahui.jiang] log tx msg received push that tx is new
+			log.Error("TxMsg - New",
+				"Time", time.Now().UnixNano(),
+				"peerID", peer.Node().ID(),
+				"peerAddress", peer.Node().IP(),
+				"txType", "push",
+				"txSize", tx.Size(),
+				"txHash", tx.Hash().String(),
+				"txGasPrice", tx.GasPrice().String(),
+				"txGasFeeCap", tx.GasFeeCap().String(),
+				"txGasTipCap", tx.GasTipCap().String())
 		}
 
 		peer.markTransaction(tx.Hash())
@@ -485,24 +492,31 @@ func handlePooledTransactions(backend Backend, msg Decoder, peer *Peer) error {
 		if tx == nil {
 			return fmt.Errorf("%w: transaction %d is nil", errDecode, i)
 		}
-		// [yahui.jiang] log tx msg received pool
-		log.Error("TxMsg",
-			"Time", time.Now().UnixNano(),
-			"peerID", peer.Node().ID(),
-			"peerAddress", peer.Node().IP(),
-			"txType", "pool",
-			"txSize", tx.Size(),
-			"txHash", tx.Hash().String())
 
 		// [yahui.jiang] log tx msg for pools that the tx already exists
 		if backend.TxPool().Get(tx.Hash()) != nil {
-			log.Error("TxMsg - Bad Decision",
+			log.Error("TxMsg - Exist",
 				"Time", time.Now().UnixNano(),
 				"peerID", peer.Node().ID(),
 				"peerAddress", peer.Node().IP(),
 				"txType", "pool",
 				"txSize", tx.Size(),
-				"txHash", tx.Hash().String())
+				"txHash", tx.Hash().String(),
+				"txGasPrice", tx.GasPrice().String(),
+				"txGasFeeCap", tx.GasFeeCap().String(),
+				"txGasTipCap", tx.GasTipCap().String())
+		} else {
+			// [yahui.jiang] log tx msg received pool that tx is new
+			log.Error("TxMsg - New",
+				"Time", time.Now().UnixNano(),
+				"peerID", peer.Node().ID(),
+				"peerAddress", peer.Node().IP(),
+				"txType", "pool",
+				"txSize", tx.Size(),
+				"txHash", tx.Hash().String(),
+				"txGasPrice", tx.GasPrice().String(),
+				"txGasFeeCap", tx.GasFeeCap().String(),
+				"txGasTipCap", tx.GasTipCap().String())
 		}
 
 		peer.markTransaction(tx.Hash())
